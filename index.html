@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GPA Calculator - Tính điểm thông minh cho bạn</title>
+  <style>
+    :root {
+      --main-color: #9c9cff;
+      --hover-color: #6caeff;
+      --background: linear-gradient(135deg, #f0f4ff, #e6f7ff);
+      --card-bg: #ffffff;
+      --font: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--background);
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      background-color: var(--main-color);
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2rem;
+      letter-spacing: 1px;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+      padding: 40px 20px;
+      box-sizing: border-box;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      text-align: center;
+      transition: 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      margin-bottom: 20px;
+      color: var(--main-color);
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 30px;
+    }
+
+    .options a {
+      background-color: var(--main-color);
+      color: white;
+      text-decoration: none;
+      padding: 15px 25px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    .options a:hover {
+      background-color: var(--hover-color);
+      transform: scale(1.03);
+    }
+
+    .feedback-button {
+      margin-top: 40px;
+      font-size: 1rem;
+      color: var(--hover-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* ⚠️ BIỂU TƯỢNG BÁO LỖI CÓ ANIMATION */
+    .alert-icon {
+      font-size: 1.2rem;
+      animation: blink 1.5s infinite;
+      transition: color 0.3s ease;
+    }
+
+    .alert-icon:hover {
+      color: #ff6600;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .feedback-form {
+      display: none;
+      margin-top: 20px;
+      text-align: left;
+    }
+
+    .feedback-form textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      resize: vertical;
+    }
+
+    .feedback-form button {
+      margin-top: 10px;
+      background-color: var(--main-color);
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .footer {
+      margin-top: auto;
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+  <script>
+    function toggleFeedbackForm() {
+      const form = document.getElementById('feedbackForm');
+      form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function sendFeedback() {
+      const content = document.getElementById('feedbackText').value;
+      const mailtoLink = `mailto:nguyenzuann@gmail.com?subject=Góp ý từ người dùng GPA Calculator=${encodeURIComponent(content)}`;
+      window.location.href = mailtoLink;
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>🎓GPA Calculator </h1>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <h2>Bạn muốn làm gì hôm nay?</h2>
+      <div class="options">
+        <a href="mon.html">📘 Tính điểm 1 môn học</a>
+        <a href="hocky.html">📚 Tính GPA cả học kỳ</a>
+      </div>
+
+      <!-- CHÈN THÊM BIỂU TƯỢNG ⚠️  -->
+      <div class="feedback-button" onclick="toggleFeedbackForm()">
+        💡 Góp ý hoặc báo lỗi? Nhấn vào đây 
+        <span class="alert-icon" title="Báo lỗi hoặc góp ý">⚠️</span>
+      </div>
+
+      <div class="feedback-form" id="feedbackForm">
+        <textarea id="feedbackText" placeholder="Nhập góp ý hoặc lỗi bạn muốn báo..."></textarea>
+        <br>
+        <button onclick="sendFeedback()">Gửi phản hồi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    &copy; GPA Calculator. Made with 💜 để giúp bạn học giỏi hơn mỗi ngày.
+  </div>
+</body>
+</html>
+
+
