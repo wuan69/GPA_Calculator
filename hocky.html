@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tính GPA học kỳ</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e6f0fa;
+      color: #1a1a2e;
+      padding: 20px;
+      min-height: 100vh;
+      margin: 0;
+    }
+    header {
+      background: #4682b4;
+      color: white;
+      text-align: center;
+      padding: 10px 0;
+      margin-bottom: 20px;
+      border-radius: 0 0 12px 12px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px 0;
+      font-weight: 600;
+    }
+    input[type="number"], input[type="text"] {
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      transition: 0.3s;
+      outline: none;
+    }
+    input[type="number"]:focus, input[type="text"]:focus {
+      border-color: #4682b4;
+      box-shadow: 0 0 5px rgba(70, 130, 180, 0.3);
+    }
+    button {
+      background: #4682b4;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: background 0.3s;
+      width: 100%;
+      margin-top: 15px;
+    }
+    button:hover {
+      background: #4169e1;
+    }
+    .subjects-container {
+      margin-top: 20px;
+    }
+    .subject-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .subject-row input {
+      flex: 1;
+    }
+    .subject-row input[type="text"] {
+      flex: 2;
+    }
+    h3 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    .result {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      max-width: 700px;
+      margin: 20px auto;
+      color: #4682b4;
+      line-height: 1.5;
+    }
+    .result strong {
+      color: #4682b4;
+    }
+    ul {
+      list-style-type: disc;
+      padding-left: 20px;
+    }
+    li {
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+    #gpaChart {
+      max-width: 300px;
+      margin: 20px auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📊 Tính GPA học kỳ</h1>
+  </header>
+  <div class="container">
+    <label for="numLearned">Số môn đã học <span style="color:red">*</span>:</label>
+    <input type="number" min="0" id="numLearned" value="0" />
+    <label for="numNotLearned">Số môn chưa học (không bắt buộc):</label>
+    <input type="number" min="0" id="numNotLearned" value="0" />
+    <button id="generateBtn">Hiển thị bảng nhập điểm</button>
+    <form id="subjectsForm" style="display:none;">
+      <div id="learnedSubjects" class="subjects-container">
+        <h3>Môn đã học (bắt buộc nhập tên, tín chỉ, điểm tổng kết):</h3>
+      </div>
+      <div id="notLearnedSubjects" class="subjects-container" style="display:none;">
+        <h3>Môn chưa học (nhập tên, tín chỉ; điểm để trống):</h3>
+      </div>
+      <label for="targetGpa">Mục tiêu GPA (thang 4.0 hoặc chữ A+, A, B+, ...):</label>
+      <input type="text" id="targetGpa" placeholder="Ví dụ: 3.0 hoặc B+" />
+      <button type="submit">Tính GPA</button>
+    </form>
+    <div id="result" class="result" style="display:none;">
+      <canvas id="gpaChart"></canvas>
+    </div>
+  </div>
+  <script>
+    // Chuyển điểm 10 sang 4.0
+    function convert10To4(score10) {
+      if (score10 >= 9.5) return 4.0;      // A+
+      if (score10 >= 8.5) return 3.8;      // A
+      if (score10 >= 8.0) return 3.5;      // B+
+      if (score10 >= 7.0) return 3.0;      // B
+      if (score10 >= 6.5) return 2.5;      // C+
+      if (score10 >= 5.5) return 2.0;      // C
+      if (score10 >= 5.0) return 1.5;      // D+
+      if (score10 >= 4.0) return 1.0;      // D
+      return 0.0;                          // F
+    }
+
+    // Chuyển chữ (A+, A, B+, B, ...) sang điểm GPA số
+    function convertLetterToGPA(letter) {
+      const map = {
+        "A+": 4.0,
+        "A": 3.8,
+        "B+": 3.5,
+        "B": 3.0,
+        "C+": 2.5,
+        "C": 2.0,
+        "D+": 1.5,
+        "D": 1.0,
+        "F": 0.0,
+      };
+      letter = letter.toUpperCase().trim();
+      return map[letter] !== undefined ? map[letter] : NaN;
+    }
+
+    // Chuyển số GPA thành nhãn chữ
+    function gpaLabel(gpa) {
+      if (gpa >= 3.9) return "A+";
+      if (gpa >= 3.8) return "A";
+      if (gpa >= 3.5) return "B+";
+      if (gpa >= 3.0) return "B";
+      if (gpa >= 2.5) return "C+";
+      if (gpa >= 2.0) return "C";
+      if (gpa >= 1.5) return "D+";
+      if (gpa >= 1.0) return "D";
+      return "F";
+    }
+
+    // Chuyển GPA thành điểm thang 10 (dùng để hiển thị kết quả)
+    function convertGpaTo10(gpa) {
+      if (gpa >= 4.0) return 9.5;
+      if (gpa >= 3.8) return 8.5;
+      if (gpa >= 3.5) return 8.0;
+      if (gpa >= 3.0) return 7.0;
+      if (gpa >= 2.5) return 6.5;
+      if (gpa >= 2.0) return 5.5;
+      if (gpa >= 1.5) return 5.0;
+      if (gpa >= 1.0) return 4.0;
+      return 2.5;
+    }
+
+    const numLearnedInput = document.getElementById("numLearned");
+    const numNotLearnedInput = document.getElementById("numNotLearned");
+    const generateBtn = document.getElementById("generateBtn");
+    const subjectsForm = document.getElementById("subjectsForm");
+    const learnedSubjectsDiv = document.getElementById("learnedSubjects");
+    const notLearnedSubjectsDiv = document.getElementById("notLearnedSubjects");
+    const resultDiv = document.getElementById("result");
+    const targetGpaInput = document.getElementById("targetGpa");
+    let chartInstance = null;
+
+    function createSubjectRow(withScore) {
+      const row = document.createElement("div");
+      row.classList.add("subject-row");
+
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = "Tên môn (có thể viết tắt)";
+      nameInput.required = true;
+      row.appendChild(nameInput);
+
+      const creditInput = document.createElement("input");
+      creditInput.type = "number";
+      creditInput.placeholder = "Tín chỉ";
+      creditInput.min = "0.5";
+      creditInput.step = "0.5";
+      creditInput.required = true;
+      row.appendChild(creditInput);
+
+      if (withScore) {
+        const scoreInput = document.createElement("input");
+        scoreInput.type = "number";
+        scoreInput.placeholder = "Điểm tổng kết (0-10)";
+        scoreInput.min = "0";
+        scoreInput.max = "10";
+        scoreInput.step = "0.1";
+        scoreInput.required = true;
+        row.appendChild(scoreInput);
+      }
+
+      return row;
+    }
+
+    function saveSubjectData(container) {
+      const rows = container.querySelectorAll(".subject-row");
+      return Array.from(rows).map(row => {
+        const inputs = row.querySelectorAll("input");
+        return {
+          name: inputs[0].value,
+          credit: inputs[1].value,
+          score: inputs.length > 2 ? inputs[2].value : ""
+        };
+      });
+    }
+
+    function restoreSubjectData(container, data, withScore) {
+      container.innerHTML = withScore
+        ? "<h3>Môn đã học (bắt buộc nhập tên, tín chỉ, điểm tổng kết):</h3>"
+        : "<h3>Môn chưa học (nhập tên, tín chỉ; điểm để trống):</h3>";
+      data.forEach(item => {
+        const row = createSubjectRow(withScore);
+        const inputs = row.querySelectorAll("input");
+        inputs[0].value = item.name || "";
+        inputs[1].value = item.credit || "";
+        if (withScore && inputs[2]) inputs[2].value = item.score || "";
+        container.appendChild(row);
+      });
+    }
+
+    function updateSubjectRows() {
+      const nLearned = parseInt(numLearnedInput.value) || 0;
+      const nNotLearned = parseInt(numNotLearnedInput.value) || 0;
+
+      if (nLearned <= 0) {
+        alert("Vui lòng nhập số môn đã học lớn hơn 0.");
+        return false;
+      }
+
+      // Save existing data
+      const learnedData = saveSubjectData(learnedSubjectsDiv);
+      const notLearnedData = saveSubjectData(notLearnedSubjectsDiv);
+
+      // Clear containers
+      learnedSubjectsDiv.innerHTML = "<h3>Môn đã học (bắt buộc nhập tên, tín chỉ, điểm tổng kết):</h3>";
+      notLearnedSubjectsDiv.innerHTML = "<h3>Môn chưa học (nhập tên, tín chỉ; điểm để trống):</h3>";
+
+      // Restore and adjust learned subjects
+      const learnedRows = Math.max(nLearned, learnedData.length);
+      const newLearnedData = learnedData.slice(0, nLearned);
+      for (let i = learnedData.length; i < nLearned; i++) {
+        newLearnedData.push({ name: "", credit: "", score: "" });
+      }
+      restoreSubjectData(learnedSubjectsDiv, newLearnedData, true);
+
+      // Restore and adjust unlearned subjects
+      const newNotLearnedData = notLearnedData.slice(0, nNotLearned);
+      for (let i = notLearnedData.length; i < nNotLearned; i++) {
+        newNotLearnedData.push({ name: "", credit: "" });
+      }
+      restoreSubjectData(notLearnedSubjectsDiv, newNotLearnedData, false);
+
+      // Show/hide unlearned subjects section
+      notLearnedSubjectsDiv.style.display = nNotLearned > 0 ? "block" : "none";
+      targetGpaInput.required = nNotLearned > 0;
+      targetGpaInput.placeholder = nNotLearned > 0 ? "Ví dụ: 3.0 hoặc B+ (bắt buộc)" : "Ví dụ: 3.0 hoặc B+ (không bắt buộc)";
+
+      subjectsForm.style.display = "block";
+      return true;
+    }
+
+    generateBtn.addEventListener("click", () => {
+      if (updateSubjectRows()) {
+        resultDiv.innerHTML = "<canvas id='gpaChart'></canvas>";
+        resultDiv.style.display = "none";
+        if (chartInstance) chartInstance.destroy();
+      }
+    });
+
+    subjectsForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const nLearned = parseInt(numLearnedInput.value) || 0;
+      const nNotLearned = parseInt(numNotLearnedInput.value) || 0;
+
+      const learnedRows = learnedSubjectsDiv.querySelectorAll(".subject-row");
+      let totalPoints = 0;
+      let totalCredits = 0;
+      let error = false;
+
+      let learnedSubjects = [];
+
+      learnedRows.forEach((row, i) => {
+        const inputs = row.querySelectorAll("input");
+        const name = inputs[0].value.trim();
+        const credit = parseFloat(inputs[1].value);
+        const score = parseFloat(inputs[2].value);
+
+        if (!name) {
+          alert(`Vui lòng nhập tên môn đã học thứ ${i + 1}`);
+          error = true;
+          return;
+        }
+        if (isNaN(credit) || credit <= 0) {
+          alert(`Vui lòng nhập tín chỉ hợp lệ cho môn đã học thứ ${i + 1}`);
+          error = true;
+          return;
+        }
+        if (isNaN(score) || score < 0 || score > 10) {
+          alert(`Vui lòng nhập điểm tổng kết (0-10) hợp lệ cho môn đã học thứ ${i + 1}`);
+          error = true;
+          return;
+        }
+
+        const gpa4 = convert10To4(score);
+
+        learnedSubjects.push({ name, credit, score, gpa4 });
+
+        totalPoints += score * credit; // Use score (scale 10) for calculation
+        totalCredits += credit;
+      });
+
+      if (error) return;
+
+      let notLearnedSubjects = [];
+      let totalCreditsNotLearned = 0;
+      if (nNotLearned > 0) {
+        const notLearnedRows = notLearnedSubjectsDiv.querySelectorAll(".subject-row");
+        for (let i = 0; i < nNotLearned; i++) {
+          const inputs = notLearnedRows[i].querySelectorAll("input");
+          const name = inputs[0].value.trim();
+          const credit = parseFloat(inputs[1].value);
+
+          if (!name) {
+            alert(`Vui lòng nhập tên môn chưa học thứ ${i + 1}`);
+            error = true;
+            break;
+          }
+          if (isNaN(credit) || credit <= 0) {
+            alert(`Vui lòng nhập tín chỉ hợp lệ cho môn chưa học thứ ${i + 1}`);
+            error = true;
+            break;
+          }
+
+          notLearnedSubjects.push({ name, credit });
+          totalCreditsNotLearned += credit;
+        }
+        if (error) return;
+      }
+
+      const targetRaw = targetGpaInput.value.trim();
+      let targetGpaNum = NaN;
+
+      if (targetRaw === "" && nNotLearned > 0) {
+        alert("Vui lòng nhập mục tiêu GPA khi có môn chưa học.");
+        return;
+      } else if (targetRaw !== "") {
+        targetGpaNum = parseFloat(targetRaw);
+        if (isNaN(targetGpaNum)) {
+          targetGpaNum = convertLetterToGPA(targetRaw);
+        }
+        if (isNaN(targetGpaNum) || targetGpaNum < 0 || targetGpaNum > 4) {
+          alert("Mục tiêu GPA không hợp lệ. Vui lòng nhập số từ 0 đến 4 hoặc chữ như A+, A, B+,...");
+          return;
+        }
+      }
+
+      let html = "";
+
+      if (totalCredits === 0) {
+        html += "<p>Bạn chưa nhập tín chỉ hợp lệ cho các môn đã học.</p>";
+        resultDiv.innerHTML = `<canvas id='gpaChart'></canvas>${html}`;
+        resultDiv.style.display = "block";
+        if (chartInstance) chartInstance.destroy();
+        return;
+      }
+
+      // Calculate current GPA (on 4.0 scale)
+      const currentGpaPoints = learnedSubjects.reduce((sum, subj) => sum + subj.gpa4 * subj.credit, 0);
+      const currentGpa = currentGpaPoints / totalCredits;
+
+      html += `<strong>GPA hiện tại (môn đã học):</strong> ${currentGpa.toFixed(2)} (${gpaLabel(currentGpa)})<br/>`;
+
+      if (nNotLearned === 0) {
+        resultDiv.innerHTML = `<canvas id='gpaChart'></canvas>${html}`;
+        resultDiv.style.display = "block";
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(document.getElementById('gpaChart').getContext('2d'), {
+          type: 'pie',
+          data: {
+            labels: ['GPA Hiện tại', 'Còn lại'],
+            datasets: [{
+              data: [currentGpa, 4.0 - currentGpa],
+              backgroundColor: ['#4682b4', '#90EE90'],
+              borderColor: ['#fff', '#fff'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: 'Phân bố GPA' }
+            }
+          }
+        });
+        return;
+      }
+
+      // Calculate required score for unlearned subjects (on scale 10)
+      const totalCreditsAll = totalCredits + totalCreditsNotLearned;
+
+      // Map target GPA (4.0 scale) to equivalent score on 10 scale based on user-provided mapping
+      let targetScore10;
+      if (targetGpaNum >= 4.0) targetScore10 = 9.0;      // A+
+      else if (targetGpaNum >= 3.8) targetScore10 = 8.5; // A
+      else if (targetGpaNum >= 3.5) targetScore10 = 8.0; // B+
+      else if (targetGpaNum >= 3.0) targetScore10 = 7.0; // B
+      else if (targetGpaNum >= 2.5) targetScore10 = 6.0; // C+
+      else if (targetGpaNum >= 2.0) targetScore10 = 5.5; // C
+      else if (targetGpaNum >= 1.5) targetScore10 = 5.0; // D+
+      else if (targetGpaNum >= 1.0) targetScore10 = 4.0; // D
+      else targetScore10 = 2.5;                          // F
+
+      // Solve for x: (totalPoints + x * totalCreditsNotLearned) / totalCreditsAll = targetScore10
+      const totalPointsNeeded = targetScore10 * totalCreditsAll;
+      const remainingPointsNeeded = totalPointsNeeded - totalPoints;
+      const avgScoreNeeded = remainingPointsNeeded / totalCreditsNotLearned;
+
+      if (avgScoreNeeded > 10 || avgScoreNeeded < 0) {
+        html += `<p style="color:red;">Không thể đạt được mục tiêu GPA ${targetGpaNum.toFixed(2)} (${gpaLabel(targetGpaNum)}) với các môn chưa học và tín chỉ hiện tại.</p>`;
+        resultDiv.innerHTML = `<canvas id='gpaChart'></canvas>${html}`;
+        resultDiv.style.display = "block";
+        if (chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(document.getElementById('gpaChart').getContext('2d'), {
+          type: 'pie',
+          data: {
+            labels: ['GPA Hiện tại', 'Còn lại'],
+            datasets: [{
+              data: [currentGpa, 4.0 - currentGpa],
+              backgroundColor: ['#4682b4', '#90EE90'],
+              borderColor: ['#fff', '#fff'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: 'top' },
+              title: { display: true, text: 'Phân bố GPA' }
+            }
+          }
+        });
+        return;
+      }
+
+      html += `<strong>Mục tiêu GPA học kỳ:</strong> ${targetGpaNum.toFixed(2)} (${gpaLabel(targetGpaNum)})<br/>`;
+      html += `<strong>Chi tiết điểm cần đạt từng môn chưa học:</strong><ul>`;
+      notLearnedSubjects.forEach((subj) => {
+        const neededGpa = convert10To4(avgScoreNeeded);
+        html += `<li><strong>${subj.name}</strong> (${subj.credit} tín chỉ): cần đạt tối thiểu <strong>${avgScoreNeeded.toFixed(1)} điểm (thang 10)</strong> hoặc GPA ~${neededGpa.toFixed(2)} (${gpaLabel(neededGpa)})</li>`;
+      });
+      html += `</ul>`;
+
+      resultDiv.innerHTML = `<canvas id='gpaChart'></canvas>${html}`;
+      resultDiv.style.display = "block";
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(document.getElementById('gpaChart').getContext('2d'), {
+        type: 'pie',
+        data: {
+          labels: ['GPA Hiện tại', 'GPA Cần đạt'],
+          datasets: [{
+            data: [currentGpa, targetGpaNum - currentGpa],
+            backgroundColor: ['#4682b4', '#90EE90'],
+            borderColor: ['#fff', '#fff'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'top' },
+            title: { display: true, text: 'Phân bố GPA' }
+          }
+        }
+      });
+    });
+  </script>
+</body>
+</html>
