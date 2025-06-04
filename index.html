@@ -202,16 +202,24 @@
 <script>
   document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))) {
-      alert("⚠️ Bản quyền by [Nguyễn Văn Quang]. Không sao chép hoặc tái phân phối!");
+      alert("⚠️ Bản quyền. Không sao chép hoặc tái phân phối!");
       e.preventDefault();
     }
   });
-
-  
   document.addEventListener('contextmenu', function(e) {
-    alert("🚫 Nội dung được bảo vệ ! Tự trọng ");
+    alert("🚫 Nội dung được bảo vệ  ");
     e.preventDefault();
   });
 </script>
+<script>
+  document.addEventListener("keydown", function(e) {
+    // Chặn Ctrl+U
+    if (e.ctrlKey && e.key.toLowerCase() === 'u') {
+      alert("🚫 Không được xem mã nguồn trang!");
+      e.preventDefault();
+    }
+  });
+</script>
+
 
 
