@@ -211,8 +211,27 @@
     </table>
     <p style="text-align:center;font-style:italic">Điểm tổng kết = (Điểm TK × 0.3) + (Điểm GK × 0.2) + (Điểm CK × 0.5)</p>
   </div>
-  <script>
-  
-  </script>
 </body>
 </html>
+<script>
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))) {
+      alert("⚠️ Bản quyền. Không sao chép hoặc tái phân phối!");
+      e.preventDefault();
+    }
+  });
+  document.addEventListener('contextmenu', function(e) {
+    alert("🚫 Nội dung được bảo vệ  ");
+    e.preventDefault();
+  });
+</script>
+<script>
+  document.addEventListener("keydown", function(e) {
+    // Chặn Ctrl+U
+    if (e.ctrlKey && e.key.toLowerCase() === 'u') {
+      alert("🚫 Không được xem mã nguồn trang!");
+      e.preventDefault();
+    }
+  });
+</script>
+
